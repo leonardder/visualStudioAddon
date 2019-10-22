@@ -8,25 +8,27 @@ _ = lambda x : x
 
 # Add-on information variables
 addon_info = {
-	# for previously unpublished addons, please follow the community guidelines at:
-	# https://bitbucket.org/nvdaaddonteam/todo/raw/master/guideLines.txt
-	# add-on Name, internal for nvda
 	"addon_name" : "visualStudio",
-	# Add-on summary, usually the user visible name of the addon.
 	# Translators: Summary for this add-on to be shown on installation and add-on information.
-	"addon_summary" : _("visual studio add-on"),
-	# Add-on description
+	"addon_summary" : _("Extended support for Visual Studio"),
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
-	"addon_description" : _("""this add-on aims to resolve some issues with visual studio, and to enhance the user experience while using NVDA
-	please refer to the help seqtion to get the list of fixes and enhancements this add-on offers"""),
+	"addon_description" : _(
+		"this add-on aims to resolve some issues with visual studio, and to enhance the user experience while using NVDA. "
+		"please refer to the help seqtion to get the list of fixes and enhancements this add-on offers"
+	),
 	# version
-	"addon_version" : "1.0dev",
+	"addon_version" : "2019.10",
 	# Author(s)
-	"addon_author" : u"mohammad suliman <mohmad.s93@gmail.com>",
+	"addon_author" : "mohammad suliman <mohmad.s93@gmail.com>, Leonard de Ruijter <alderuijter@gmail.com>",
 	# URL for the add-on documentation support
 	"addon_url" : None,
 	# Documentation file name
 	"addon_docFileName" : "readme.html",
+	# Minimum NVDA version supported (e.g. "2018.3.0", minor version is optional)
+	"addon_minimumNVDAVersion" : "2019.3",
+	# Last NVDA version supported/tested (e.g. "2018.4.0", ideally more recent than minimum version)
+	"addon_lastTestedNVDAVersion" : "2019.3",
+
 }
 
 
