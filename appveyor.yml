@@ -5,7 +5,11 @@ install:
   - py -m pip install markdown scons
 
 build_script:
-  - c:\python37\scripts\scons dev=True
+  if ($env:APPVEYOR_REPO_TAG_NAME) {
+    - c:\python37\scripts\scons
+  } else {
+    - c:\python37\scripts\scons dev=True
+  }
   - c:\python37\scripts\scons pot
 
 artifacts:
