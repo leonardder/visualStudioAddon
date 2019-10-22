@@ -21,5 +21,7 @@ deploy:
   artifact: addon
   draft: false
   prerelease: false
+  auth_token:
+    secure: T5Xj+3ra81bk/wX0MFN3ADsbpOQ0gDOeQZFENqV3VV+lujPeeZUGmbCzhTPUGYXW
   on:
     appveyor_repo_tag: true        # deploy on tag push only
