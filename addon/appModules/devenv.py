@@ -80,8 +80,6 @@ class AppModule(appModuleHandler.AppModule):
 			clsList.insert(0, editorTabControl)
 		elif isinstance(obj, UIA) and obj.UIAElement.currentClassName == "IntellisenseMenuItem" and obj.role == controlTypes.ROLE_MENUITEM:
 			clsList.insert(0, IntelliSenseMenuItem)
-		elif isinstance(obj, UIA) and obj.UIAElement.currentClassName == "MenuItem" and obj.role == controlTypes.ROLE_MENUITEM:
-			clsList.insert(0, VSMenuItem)
 		elif obj.windowClassName == 'TREEGRID' and obj.role == controlTypes.ROLE_WINDOW:
 			clsList.insert(0, VarsTreeView)
 		elif obj.name is None and obj.windowClassName == 'TREEGRID' and obj.role == controlTypes.ROLE_PANE:
@@ -243,9 +241,6 @@ class editorTabControl(UIA):
 		return super().event_focusEntered()
 
 
-REG_CUT_POS_INFO = re.compile(r" \d+ of \d+$")
-REG_GET_ITEM_INDEX = re.compile(r"^ \d+")
-REG_GET_GROUP_COUNT = re.compile(r"\d+$")
 class IntelliSenseMenuItem(UIA):
 
 	def _get_states(self):
@@ -280,31 +275,8 @@ class IntelliSenseMenuItem(UIA):
 
 	def _get_name(self):
 		# by default, the name of the intelliSense menu item includes the position info
-		#so, remove it
-		oldName = super().name
-		newName = re.sub(REG_CUT_POS_INFO, "", oldName)
-		return newName
-
-	def _get_positionInfo(self):
-		"""gets the position info of the intelliSense menu item based on the original name
-		the user can control whether to have this position info from VS settings dialog
-		"""
-		if not config.conf["visualStudio"]["reportIntelliSensePosInfo"]:
-			return {}
-		oldName = super().name
-		try:
-			positionalInfoStr = re.search(REG_CUT_POS_INFO, oldName).group()
-		except:
-			return {}
-		info={}
-		itemIndex = int(re.search(REG_GET_ITEM_INDEX, positionalInfoStr).group())
-		if itemIndex>0:
-			info['indexInGroup']=itemIndex
-		groupCount = int(re.search(REG_GET_GROUP_COUNT, positionalInfoStr).group())
-		if groupCount>0:
-			info['similarItemsInGroup'] = groupCount
-		return info
-
+		# Use something else, HelpText may be?
+		super().name
 
 class VarsTreeView(IAccessible):
 	"""the parent view of the variables view in the locals / autos/ watch/ call stack windows"""
@@ -454,35 +426,6 @@ class BadVarView(ContentGenericClient):
 		"kb:rightArrow": "expand"
 	}
 
-
-class VSMenuItem(UIA):
-	"""ordinary menu items in visual studio"""
-
-	def _get_states(self):
-		states = super()._get_states()
-		# visual studio exposes the menu item which has a sub menu as collapsed/ expanded
-		#add HASPOPup state to fix NVDA behavior when this state is present
-		if controlTypes.STATE_COLLAPSED in states or controlTypes.STATE_EXPANDED in states:
-			states.add(controlTypes.STATE_HASPOPUP)
-		#this state is redundant in this context, it causes NVDA to say "not checked" for each menu item
-		states.discard(controlTypes.STATE_CHECKABLE)
-		return states
-
-	def _get_keyboardShortcut(self):
-		#this method is redundant for NVDA 16.3 and newer. However, we need it for older versions of NVDA
-		ret = ""
-		try:
-			ret += self.UIAElement.currentAccessKey
-		except COMError:
-			pass
-		if ret != "":
-			#add a double space to the end of the string
-			ret +="  "
-		try:
-			ret += self.UIAElement.currentAcceleratorKey
-		except COMError:
-			pass
-		return ret
 
 #regular expression to get line info text from the entire status bar text
 REG_GET_LINE_TEXT = re.compile(r"Ln \d+")
