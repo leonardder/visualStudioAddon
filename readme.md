@@ -3,16 +3,14 @@
 this add-on aims to resolve some issues with visual studio, and to enhance the user experience while using NVDA.
 
 ## downloading the add-on
-you can download the add-on using 
-[this link](https://www.dropbox.com/s/eizkvddpnitmoyx/visualStudio-1.0dev.nvda-addon?dl=1)
-and then install it as any other add-on
+you can download [the most recent build of the add-on](https://ci.appveyor.com/api/projects/leonardder/visualStudioAddon/artifacts/visualStudio.nvda-addon?branch=master) and then install it as any other add-on
 
 ## supported versions
-the add-on has been tested with visual studio 2013 express and 2015 community and enterprise editions. however, it is expected to work with all editions from 2010 to 2015.
-if you have encountered any problem with getting the add-on to work with any edition of VS 2010 to 2015, please let me know. 
-also, if you have verified that the fixes by the add-on work with a version of VS which hasn't been tested so far, I'll be happy to hear from you, and update this doc accordingly.
+the add-on has been tested with visual studio 2019 and might be working with older versions as well.
 
 ## issues which have been fixed so far
+This section is outdated.
+
 * Improvements to intelliSense.
 * fixes for accessibility of the debug windows.
 * status bar is now reported when using  standard NVDA key stroke (NVDA + end)
