@@ -6,14 +6,9 @@
 
 from comtypes import COMError
 
-
-import appModuleHandler
 import addonHandler
 from NVDAObjects.UIA import UIA, WpfTextView
-try:
-	from NVDAObjects.UIA import Toast_win8 as Toast
-except ImportError:
-	from NVDAObjects.UIA import Toast
+from NVDAObjects.UIA import Toast_win8 as Toast
 from NVDAObjects.behaviors import RowWithoutCellObjects, RowWithFakeNavigation
 from NVDAObjects.IAccessible import IAccessible, ContentGenericClient
 from NVDAObjects.window import Desktop
@@ -33,6 +28,7 @@ import speech
 import config
 import gui
 import wx
+from nvdaBuiltin.appModules import devenv as devenv_builtIn
 
 
 def _(x):
@@ -59,30 +55,20 @@ lastFocusedIntelliSenseItem = None
 caretMovedToDifferentLine = False
 
 
-class AppModule(appModuleHandler.AppModule):
+class AppModule(devenv_builtIn.AppModule):
 
 	def __init__(self, processID, appName=None):
 		super().__init__(processID, appName)
-		# add visual studio entry to preferences menu of NVDA
-		self.preferencesMenu = gui.mainFrame.sysTrayIcon.preferencesMenu
-		self.settingsItem = self.preferencesMenu.Append(
-			wx.ID_ANY,
-			# Translators: name of visual studio settings option in the menu.
-			_("&Visual Studio settings..."), ""
-		)
-		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onSettings, self.settingsItem)
+		# add visual studio settings panel to the NVDA settings
+		gui.settingsDialogs.NVDASettingsDialog.categoryClasses.append(VSSettingsPanel)
 		# Add a seqtion to nvda's configuration for VS
 		config.conf.spec["visualStudio"] = confspec
 
-	def onSettings(self, evt):
-		gui.mainFrame._popupSettingsDialog(VSSettingsDialog)
-
 	def terminate(self):
 		super().terminate()
-		try:
-			self.preferencesMenu.RemoveItem(self.settingsItem)
-		except wx.PyDeadObjectError:
-			pass
+		settingsPanels = gui.settingsDialogs.NVDASettingsDialog.categoryClasses
+		if VSSettingsPanel in settingsPanels:
+			settingsPanels.remove(VSSettingsPanel)
 
 	def chooseNVDAObjectOverlayClasses(self, obj, clsList):
 		"""
@@ -260,8 +246,8 @@ class AppModule(appModuleHandler.AppModule):
 			# Don't report the focus event for this element, a correct focus will follow up
 			return True
 
-# Almost copied from NVDA core with minor modifications
-# Will be removed when NVDA resolve status bar issues
+	# Almost copied from NVDA core with minor modifications
+	# Will be removed when NVDA resolve status bar issues
 	def script_reportStatusLine(self, gesture):
 		# It seems that the status bar is the last child of the forground object, so get it from there
 		obj = api.getForegroundObject().lastChild
@@ -996,34 +982,33 @@ class EditorAncestor(UIA):
 		return False
 
 
-class VSSettingsDialog(gui.SettingsDialog):
-	"""a gui dialog for visual studio settings dialog"""
+class VSSettingsPanel(gui.SettingsPanel):
+	"""a gui panel for NVDA settings dialog"""
 
-	# Translators: title of a dialog.
-	title = _("Visual Studio settings")
+	# Translators: title of a panel.
+	title = _("Visual Studio")
 
 	def makeSettings(self, settingsSizer):
-		# Translators: label of a checkbox which toggles the announcement of breakpoints via speech
-		self.announceBreakpointCheckBox = wx.CheckBox(self, wx.NewId(), label=_("&Announce breakpoints via speech"))
+		sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
+		self.announceBreakpointCheckBox = sHelper.addItem(
+			# Translators: label of a checkbox which toggles the announcement of breakpoints via speech
+			wx.CheckBox(self, wx.ID_ANY, label=_("&Announce breakpoints via speech"))
+		)
 		self.announceBreakpointCheckBox.SetValue(config.conf["visualStudio"]["announceBreakpoints"])
-		settingsSizer.Add(self.announceBreakpointCheckBox, border=10, flag=wx.BOTTOM)
-		# Translators: label of a checkbox which toggles the beep on breakpoints option
-		self.beepOnBreakpointCheckBox = wx.CheckBox(self, wx.NewId(), label=_("&Beep on  breakpoints"))
+
+		self.beepOnBreakpointCheckBox = sHelper.addItem(
+			# Translators: label of a checkbox which toggles the beep on breakpoints option
+			wx.CheckBox(self, wx.ID_ANY, label=_("&Beep on  breakpoints"))
+		)
 		self.beepOnBreakpointCheckBox.SetValue(config.conf["visualStudio"]["beepOnBreakpoints"])
-		settingsSizer.Add(self.beepOnBreakpointCheckBox, border=10, flag=wx.BOTTOM)
-		# Translators: label of a checkbox which toggles reporting of intelliSense menu item position info
-		self.reportIntelliSensePosInfoCheckBox = wx.CheckBox(
-			self, wx.NewId(),
-			label=_("&Report intelliSense menu item position information")
+
+		self.reportIntelliSensePosInfoCheckBox = sHelper.addItem(
+			# Translators: label of a checkbox which toggles reporting of intelliSense menu item position info
+			wx.CheckBox(self, wx.ID_ANY, label=_("&Report intelliSense menu item position information"))
 		)
 		self.reportIntelliSensePosInfoCheckBox.SetValue(config.conf["visualStudio"]["reportIntelliSensePosInfo"])
-		settingsSizer.Add(self.reportIntelliSensePosInfoCheckBox, border=10, flag=wx.BOTTOM)
 
-	def postInit(self):
-		self.announceBreakpointCheckBox.SetFocus()
-
-	def onOk(self, evt):
-		super().onOk(evt)
+	def onSave(self):
 		vsConfig = config.conf["visualStudio"]
 		vsConfig["announceBreakpoints"] = self.announceBreakpointCheckBox.IsChecked()
 		vsConfig["beepOnBreakpoints"] = self.beepOnBreakpointCheckBox.IsChecked()
