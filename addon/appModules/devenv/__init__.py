@@ -59,9 +59,17 @@ class AppModule(devenv_builtIn.AppModule):
 			):
 				from .overlays import TextEditor
 				clsList.insert(0, TextEditor)
+			elif (
+				obj.role == controlTypes.ROLE_UNKNOWN
+				and obj.UIAElement.CachedClassName == "WpfSignatureHelp"
+			):
+				from .overlays import ParameterInfo
+				clsList.insert(0, ParameterInfo)
+
 
 	def event_liveRegionChange(self, obj, nextHandler):
 		name = obj.name
 		if not obj.name:
 			nextHandler()
 		ui.message(name, speechPriority=speech.priorities.Spri.NOW)
+
