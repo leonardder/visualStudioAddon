@@ -60,4 +60,8 @@ class AppModule(devenv_builtIn.AppModule):
 				from .overlays import TextEditor
 				clsList.insert(0, TextEditor)
 
-
+	def event_liveRegionChange(self, obj, nextHandler):
+		name = obj.name
+		if not obj.name:
+			nextHandler()
+		ui.message(name, speechPriority=speech.priorities.Spri.NOW)
