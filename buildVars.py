@@ -23,15 +23,13 @@ addon_info = {
 	# version
 	"addon_version": "2019.10",
 
-	# FRANCIPVB: I've changed this to ease addition and removal of authors.
-	# 	I'm not sure, but this could be considered as a pattern...
-	"addon_author": str.join("", (
-		"Mohammad Suliman <mohmad.s93@gmail.com>, ",
-		"Leonard de Ruijter <alderuijter@gmail.com>, ",
+	"addon_author": ", ".join((
+		"Mohammad Suliman <mohmad.s93@gmail.com>",
+		"Leonard de Ruijter <alderuijter@gmail.com>",
 		"Francisco Del Roio <francipvb@hotmail.com>"
 	)),
 	# URL for the add-on documentation support
-	"addon_url": None,
+	"addon_url": "https://github.com/leonardder/visualStudioAddon",
 	# Documentation file name
 	"addon_docFileName": "readme.html",
 	# Minimum NVDA version supported (e.g. "2018.3.0", minor version is optional)
