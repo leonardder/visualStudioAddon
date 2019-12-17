@@ -29,31 +29,12 @@ import gui
 from .guiPanel import VSSettingsPanel
 import wx
 from nvdaBuiltin.appModules import devenv as devenv_builtIn
-
-
-def _(x):
-	"""Return the value itself as passed. This is defined just to hide python warnings."""
-	return x
-
-
 # Initialize the translation system
 addonHandler.initTranslation()
 
 # A config spec for visual studio settings within NVDA's configuration
 confspec = {
-	"announceBreakpoints": "boolean(default=True)",
-	"beepOnBreakpoints": "boolean(default=True)",
-	"reportIntelliSensePosInfo": "boolean(default=False)"
 }
-
-# Global vars
-# Whether last focused object was an intelliSense item
-intelliSenseLastFocused = False
-# Last focused intelliSense object
-lastFocusedIntelliSenseItem = None
-# Whether the caret has moved to a different line in the code editor
-caretMovedToDifferentLine = False
-
 
 class AppModule(devenv_builtIn.AppModule):
 
@@ -69,3 +50,14 @@ class AppModule(devenv_builtIn.AppModule):
 		settingsPanels = gui.settingsDialogs.NVDASettingsDialog.categoryClasses
 		if VSSettingsPanel in settingsPanels:
 			settingsPanels.remove(VSSettingsPanel)
+
+	def chooseNVDAObjectOverlayClasses(self, obj, clsList):
+		if isinstance(obj, UIA):
+			if (
+				obj.UIAElement.CachedClassName == "WpfTextView"
+				and obj.role == controlTypes.ROLE_EDITABLETEXT
+			):
+				from .overlays import TextEditor
+				clsList.insert(0, TextEditor)
+
+
