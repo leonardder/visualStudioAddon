@@ -1,33 +1,18 @@
 # appModule for visual studio
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
-# Copyright (C) 2016-2019 Mohammad Suliman, Leonard de Ruijter, https://github.com/leonardder/visualStudioAddon
-
-from comtypes import COMError
+# Copyright (C) 2016-2019 Mohammad Suliman, Leonard de Ruijter,
+# and Francisco R. Del Roio (https://github.com/leonardder/visualStudioAddon)
 
 import addonHandler
-from NVDAObjects.UIA import UIA, WpfTextView
-from NVDAObjects.UIA import Toast_win8 as Toast
-from NVDAObjects.behaviors import RowWithoutCellObjects, RowWithFakeNavigation
-from NVDAObjects.IAccessible import IAccessible, ContentGenericClient
-from NVDAObjects.window import Desktop
-from NVDAObjects import NVDAObjectTextInfo
-import textInfos
 import controlTypes
-import UIAHandler
-import api
 import ui
-import tones
-from logHandler import log
-import eventHandler
-import scriptHandler
+from NVDAObjects import UIA
 from globalCommands import SCRCAT_FOCUS
-import re
 import speech
 import config
 import gui
 from .guiPanel import VSSettingsPanel
-import wx
 from nvdaBuiltin.appModules import devenv as devenv_builtIn
 # Initialize the translation system
 addonHandler.initTranslation()
@@ -36,7 +21,13 @@ addonHandler.initTranslation()
 confspec = {
 }
 
+
 class AppModule(devenv_builtIn.AppModule):
+
+	selectedIntellisenseItem: UIA = None
+	openedIntellisensePopup = False
+	readIntellisenseHelp: bool = False
+	signatureHelpPlayed = False
 
 	def __init__(self, processID, appName=None):
 		super().__init__(processID, appName)
@@ -65,6 +56,12 @@ class AppModule(devenv_builtIn.AppModule):
 			):
 				from .overlays import ParameterInfo
 				clsList.insert(0, ParameterInfo)
+
+			elif obj.UIAElement.cachedClassName in (
+				"IntellisenseMenuItem",
+			):
+				from .overlays import IntellisenseMenuItem
+				clsList.insert(0, IntellisenseMenuItem)
 
 
 	def event_liveRegionChange(self, obj, nextHandler):
