@@ -46,6 +46,7 @@ class AppModule(devenv_builtIn.AppModule):
 			settingsPanels.remove(VSSettingsPanel)
 
 	def chooseNVDAObjectOverlayClasses(self, obj, clsList):
+		super().chooseNVDAObjectOverlayClasses(obj, clsList)
 		if isinstance(obj, UIA.UIA):
 			if (
 				obj.parent
