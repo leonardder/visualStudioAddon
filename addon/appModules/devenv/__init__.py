@@ -4,7 +4,6 @@
 # Copyright (C) 2016-2019 Mohammad Suliman, Leonard de Ruijter,
 # and Francisco R. Del Roio (https://github.com/leonardder/visualStudioAddon)
 
-import os
 import addonHandler
 import controlTypes
 import ui
@@ -48,35 +47,26 @@ class AppModule(devenv_builtIn.AppModule):
 	def chooseNVDAObjectOverlayClasses(self, obj, clsList):
 		super().chooseNVDAObjectOverlayClasses(obj, clsList)
 		if isinstance(obj, UIA.UIA):
+
 			if (
-				obj.parent
-				and obj.parent.parent
-				and obj.parent.parent.parent
-				and isinstance(obj.parent.parent.parent, UIA.UIA)
-				and obj.parent.parent.parent.UIAElement.cachedAutomationId.startswith("ST:0:0:")
+				obj.role == controlTypes.ROLE_TABCONTROL
+				and obj.UIAElement.cachedClassName == "DocumentGroup"
 			):
-				clsList.insert(0, overlays.ToolContent)
-
-			elif (
-				obj.parent
-				and obj.parent.parent
-				and obj.parent.parent.parent
-				and isinstance(obj.parent.parent.parent, UIA.UIA)
-				and obj.parent.parent.parent.UIAElement.cachedAutomationId.startswith("D:0:0:")
-			):
-				clsList.insert(0, overlays.DocumentContent)
-
-			elif obj.UIAElement.cachedClassName == "DocumentGroup":
 				clsList.insert(0, overlays.DocumentGroup)
-			elif obj.UIAElement.cachedClassName == "ToolWindowTabGroup":
+			elif (
+				obj.role == controlTypes.ROLE_TABCONTROL
+				and obj.UIAElement.cachedClassName == "ToolWindowTabGroup"
+			):
 				clsList.insert(0, overlays.ToolTabGroup)
 			elif (
-				obj.parent
+				obj.role == controlTypes.ROLE_TAB
+				and obj.parent
 				and isinstance(obj.parent, overlays.DocumentGroup)
 			):
 				clsList.insert(0, overlays.DocumentTab)
 			elif (
-				obj.parent
+				obj.role == controlTypes.ROLE_TAB
+				and obj.parent
 				and isinstance(obj.parent, overlays.ToolTabGroup)
 			):
 				clsList.insert(0, overlays.ToolTab)
@@ -87,22 +77,60 @@ class AppModule(devenv_builtIn.AppModule):
 			):
 				clsList.insert(0, overlays.ParameterInfo)
 
-			if obj.UIAElement.cachedAutomationId == "completion tooltip":
+			if (
+				obj.role == controlTypes.ROLE_TOOLTIP
+				and obj.UIAElement.cachedAutomationId == "completion tooltip"
+			):
 				clsList.insert(0, overlays.DocumentationToolTip)
 
-			if obj.UIAElement.cachedClassName == "WpfTextView":
-				if overlays.DocumentContent in clsList:
+			if (
+				obj.role == controlTypes.ROLE_EDITABLETEXT
+				and obj.UIAElement.cachedClassName == "WpfTextView"
+			):
+				if (
+					obj.parent
+					and obj.parent.parent
+					and obj.parent.parent.parent
+					and obj.parent.parent.parent.parent
+					and isinstance(obj.parent.parent.parent.parent, overlays.DocumentTab)
+				):
 					clsList.insert(0, overlays.CodeEditor)
+				elif (
+					obj.parent
+					and obj.parent.parent
+					and obj.parent.parent.parent
+					and obj.parent.parent.parent
+					and isinstance(obj.parent.parent.parent, UIA.UIA)
+					and obj.parent.parent.parent.UIAElement.cachedAutomationId in (
+						"ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}",
+					)
+				):
+					clsList.insert(0, overlays.OutputEditor)
 				else:
 					clsList.insert(0, overlays.TextEditor)
 
-			if obj.UIAElement.cachedClassName in (
-				"IntellisenseMenuItem",
+			if (
+				obj.role == controlTypes.ROLE_TABLE
+				and obj.parent
+				and obj.parent.parent
+				and obj.parent.parent.parent
+				and obj.parent.parent.parent.UIAElement.cachedAutomationId in (
+					"ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}",
+				)
+			):
+				clsList.insert(0, overlays.ErrorsListView)
+
+			if (
+				obj.role == controlTypes.ROLE_LISTITEM
+				and obj.UIAElement.cachedClassName in (
+					"IntellisenseMenuItem",
+				)
 			):
 				clsList.insert(0, overlays.IntellisenseMenuItem)
 
 			if (
-				obj.UIAElement.cachedClassName == "LiveTextBlock"
+				obj.role == controlTypes.ROLE_STATICTEXT
+				and obj.UIAElement.cachedClassName == "LiveTextBlock"
 				and obj.previous
 				and obj.previous.previous
 				and isinstance(obj.previous.previous, UIA.UIA)

@@ -13,6 +13,7 @@ import speech
 import ui
 import api
 
+from NVDAObjects import NVDAObject
 from NVDAObjects.UIA import Toast_win8 as Toast
 from NVDAObjects.UIA import UIA, WpfTextView
 import controlTypes
@@ -52,7 +53,7 @@ class TextEditor(WpfTextView):
 	pass
 
 
-class IgnoredFocusEntered:
+class IgnoredFocusEntered(NVDAObject):
 
 	def event_focusEntered(self):
 		# We should ignore this...
@@ -74,7 +75,7 @@ class ToolTabGroup(IgnoredFocusEntered, UIA):
 class ToolTab(IgnoredFocusEntered, UIA):
 	pass
 
-class DocumentContent(UIA):
+class DocumentContent(NVDAObject):
 
 	def _get_documentTab(self) -> UIA:
 		currentObj = self
@@ -94,7 +95,7 @@ class DocumentContent(UIA):
 		return self.documentTab.positionInfo
 
 
-class CodeEditor(EditableTextWithSuggestions, TextEditor):
+class CodeEditor(DocumentContent, EditableTextWithSuggestions, TextEditor):
 	"""
 	The code editor overlay class.
 	"""
@@ -173,7 +174,7 @@ class CodeEditor(EditableTextWithSuggestions, TextEditor):
 			)
 
 
-class ToolContent(UIA):
+class ToolContent(NVDAObject):
 
 	def _get_toolTab(self):
 		currentObj = self
@@ -193,6 +194,18 @@ class ToolContent(UIA):
 	def _get_name(self):
 		return self.parent.parent.name
 
+	def _get_description(self):
+		if "similarItemsInGroup" in self.positionInfo and self.positionInfo["similarItemsInGroup"] > 1:
+			# Translators: Help message to indicate that you can switch to another view
+			return _("Press CTRL+Page Up to switch to the previous window in this group, and CTRL+Page Down to switch to the next.")
+
+
+class OutputEditor(ToolContent, TextEditor):
+	pass
+
+
+class ErrorsListView(ToolContent, UIA):
+	pass
 
 class ParameterInfo (Toast):
 	role = controlTypes.ROLE_TOOLTIP
