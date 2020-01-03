@@ -4,6 +4,7 @@
 # Copyright (C) 2016-2019 Mohammad Suliman, Leonard de Ruijter,
 # and Francisco R. Del Roio (https://github.com/leonardder/visualStudioAddon)
 
+import os
 import addonHandler
 import controlTypes
 import ui
@@ -13,6 +14,7 @@ import speech
 import config
 import gui
 from .guiPanel import VSSettingsPanel
+from . import overlays
 from nvdaBuiltin.appModules import devenv as devenv_builtIn
 # Initialize the translation system
 addonHandler.initTranslation()
@@ -28,6 +30,7 @@ class AppModule(devenv_builtIn.AppModule):
 	openedIntellisensePopup = False
 	readIntellisenseHelp: bool = False
 	signatureHelpPlayed = False
+	lastFocusedEditor: UIA.WpfTextView = None
 
 	def __init__(self, processID, appName=None):
 		super().__init__(processID, appName)
@@ -43,30 +46,86 @@ class AppModule(devenv_builtIn.AppModule):
 			settingsPanels.remove(VSSettingsPanel)
 
 	def chooseNVDAObjectOverlayClasses(self, obj, clsList):
-		if isinstance(obj, UIA):
+		if isinstance(obj, UIA.UIA):
 			if (
-				obj.UIAElement.CachedClassName == "WpfTextView"
-				and obj.role == controlTypes.ROLE_EDITABLETEXT
+				obj.parent
+				and obj.parent.parent
+				and obj.parent.parent.parent
+				and isinstance(obj.parent.parent.parent, UIA.UIA)
+				and obj.parent.parent.parent.UIAElement.cachedAutomationId.startswith("ST:0:0:")
 			):
-				from .overlays import TextEditor
-				clsList.insert(0, TextEditor)
+				clsList.insert(0, overlays.ToolContent)
+
 			elif (
+				obj.parent
+				and obj.parent.parent
+				and obj.parent.parent.parent
+				and isinstance(obj.parent.parent.parent, UIA.UIA)
+				and obj.parent.parent.parent.UIAElement.cachedAutomationId.startswith("D:0:0:")
+			):
+				clsList.insert(0, overlays.DocumentContent)
+
+			elif obj.UIAElement.cachedClassName == "DocumentGroup":
+				clsList.insert(0, overlays.DocumentGroup)
+			elif obj.UIAElement.cachedClassName == "ToolWindowTabGroup":
+				clsList.insert(0, overlays.ToolTabGroup)
+			elif (
+				obj.parent
+				and isinstance(obj.parent, overlays.DocumentGroup)
+			):
+				clsList.insert(0, overlays.DocumentTab)
+			elif (
+				obj.parent
+				and isinstance(obj.parent, overlays.ToolTabGroup)
+			):
+				clsList.insert(0, overlays.ToolTab)
+
+			if (
 				obj.role == controlTypes.ROLE_UNKNOWN
 				and obj.UIAElement.CachedClassName == "WpfSignatureHelp"
 			):
-				from .overlays import ParameterInfo
-				clsList.insert(0, ParameterInfo)
+				clsList.insert(0, overlays.ParameterInfo)
 
-			elif obj.UIAElement.cachedClassName in (
+			if obj.UIAElement.cachedAutomationId == "completion tooltip":
+				clsList.insert(0, overlays.DocumentationToolTip)
+
+			if obj.UIAElement.cachedClassName == "WpfTextView":
+				if overlays.DocumentContent in clsList:
+					clsList.insert(0, overlays.CodeEditor)
+				else:
+					clsList.insert(0, overlays.TextEditor)
+
+			if obj.UIAElement.cachedClassName in (
 				"IntellisenseMenuItem",
 			):
-				from .overlays import IntellisenseMenuItem
-				clsList.insert(0, IntellisenseMenuItem)
+				clsList.insert(0, overlays.IntellisenseMenuItem)
 
+			if (
+				obj.UIAElement.cachedClassName == "LiveTextBlock"
+				and obj.previous
+				and obj.previous.previous
+				and isinstance(obj.previous.previous, UIA.UIA)
+				and obj.previous.previous.UIAElement.cachedAutomationId == "CompletionList"
+			):
+				clsList.insert(0, overlays.IntellisenseLabel)
 
 	def event_liveRegionChange(self, obj, nextHandler):
 		name = obj.name
+
 		if not obj.name:
 			nextHandler()
+
+		if isinstance(obj, overlays.IntellisenseLabel):
+			return
+
 		ui.message(name, speechPriority=speech.priorities.Spri.NOW)
 
+	def event_gainFocus(self, obj, nextHandler):
+		if (
+			not isinstance(obj, overlays.TextEditor)
+			or obj != self.lastFocusedEditor
+		):
+			self.lastFocusedEditor = obj
+			nextHandler()
+		else:
+			pass
