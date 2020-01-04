@@ -10,17 +10,13 @@ import ui
 from NVDAObjects import UIA
 from globalCommands import SCRCAT_FOCUS
 import speech
-import config
 import gui
-from .guiPanel import VSSettingsPanel
 from . import overlays
+from globalPlugins.vsAddon import config
 from nvdaBuiltin.appModules import devenv as devenv_builtIn
+
 # Initialize the translation system
 addonHandler.initTranslation()
-
-# A config spec for visual studio settings within NVDA's configuration
-confspec = {
-}
 
 
 class AppModule(devenv_builtIn.AppModule):
@@ -30,19 +26,6 @@ class AppModule(devenv_builtIn.AppModule):
 	readIntellisenseHelp: bool = False
 	signatureHelpPlayed = False
 	lastFocusedEditor: UIA.WpfTextView = None
-
-	def __init__(self, processID, appName=None):
-		super().__init__(processID, appName)
-		# add visual studio settings panel to the NVDA settings
-		gui.settingsDialogs.NVDASettingsDialog.categoryClasses.append(VSSettingsPanel)
-		# Add a seqtion to nvda's configuration for VS
-		config.conf.spec["visualStudio"] = confspec
-
-	def terminate(self):
-		super().terminate()
-		settingsPanels = gui.settingsDialogs.NVDASettingsDialog.categoryClasses
-		if VSSettingsPanel in settingsPanels:
-			settingsPanels.remove(VSSettingsPanel)
 
 	def chooseNVDAObjectOverlayClasses(self, obj, clsList):
 		super().chooseNVDAObjectOverlayClasses(obj, clsList)

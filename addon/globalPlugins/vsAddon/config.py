@@ -8,6 +8,12 @@ import config
 import gui
 import wx
 
+
+# A config spec for visual studio settings within NVDA's configuration
+confspec = {
+}
+
+
 class VSSettingsPanel(gui.SettingsPanel):
 	"""a gui panel for NVDA settings dialog"""
 
@@ -19,3 +25,8 @@ class VSSettingsPanel(gui.SettingsPanel):
 
 	def onSave(self):
 		...
+
+	@staticmethod
+	def initConfigSection():
+		# Add a seqtion to nvda's configuration for VS
+		config.conf.spec["visualStudio"] = confspec
