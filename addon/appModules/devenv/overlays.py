@@ -75,6 +75,7 @@ class ToolTabGroup(IgnoredFocusEntered, UIA):
 class ToolTab(IgnoredFocusEntered, UIA):
 	pass
 
+
 class DocumentContent(NVDAObject):
 
 	def _get_documentTab(self) -> UIA:
@@ -99,6 +100,15 @@ class CodeEditor(DocumentContent, EditableTextWithSuggestions, TextEditor):
 	"""
 	The code editor overlay class.
 	"""
+
+	typedCharacter = False
+
+	def event_typedCharacter(self, ch):
+		super().event_typedCharacter(ch)
+		if self.appModule.openedIntellisensePopup:
+			self.typedCharacter = True
+		else:
+			self.typedCharacter = False
 
 	def event_gainFocus(self):
 		if self.appModule.openedIntellisensePopup:
@@ -250,23 +260,33 @@ class IntellisenseMenuItem(UIA):
 				)
 
 			if self.appModule.selectedIntellisenseItem != self:
-				ui.message(
-					self.name,
-					speech.Spri.NOW if self.appModule.readIntellisenseHelp else speech.Spri.NEXT
-				)
+				if self.appModule.readIntellisenseHelp:
+					speech.cancelSpeech()
+				ui.message(self.name)
 
 				self.appModule.selectedIntellisenseItem = self
 
 			if not self.appModule.readIntellisenseHelp:
 				self.appModule.readIntellisenseHelp = True
 
-
 	def event_nameChange(self):
-		if self._isHighlighted():
+		if (
+			self.appModule.selectedIntellisenseItem == self
+			# Check if the user typed a character
+			and self.editor.typedCharacter
+		):
+			self.appModule.selectedIntellisenseItem = None
 			self.event_UIA_itemStatus()
 
-	event_UIA_elementSelected = event_UIA_itemStatus
+	def event_UIA_elementSelected(self):
+		if self.appModule.selectedIntellisenseItem != self:
+			self.event_UIA_itemStatus()
+
+	def event_selection(self):
+		self.event_UIA_elementSelected()
 
 
 class IntellisenseLabel(UIA):
-	pass
+
+	def event_liveRegionChange(self):
+		pass

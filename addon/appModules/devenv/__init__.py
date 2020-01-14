@@ -104,8 +104,7 @@ class AppModule(devenv_builtIn.AppModule):
 				clsList.insert(0, overlays.ErrorsListView)
 
 			if (
-				obj.role == controlTypes.ROLE_LISTITEM
-				and obj.UIAElement.cachedClassName in (
+				obj.UIAElement.cachedClassName in (
 					"IntellisenseMenuItem",
 				)
 			):
@@ -117,7 +116,9 @@ class AppModule(devenv_builtIn.AppModule):
 				and obj.previous
 				and obj.previous.previous
 				and isinstance(obj.previous.previous, UIA.UIA)
-				and obj.previous.previous.UIAElement.cachedAutomationId == "CompletionList"
+				and obj.previous.previous.UIAElement.cachedAutomationId in (
+					"CompletionList",
+				)
 			):
 				clsList.insert(0, overlays.IntellisenseLabel)
 
@@ -128,9 +129,10 @@ class AppModule(devenv_builtIn.AppModule):
 			nextHandler()
 
 		if isinstance(obj, overlays.IntellisenseLabel):
+			# We should omit speaking of intellisense label
 			return
 
-		ui.message(name, speechPriority=speech.priorities.Spri.NOW)
+		ui.message(name, speechPriority=speech.Spri.NOW)
 
 	def event_gainFocus(self, obj, nextHandler):
 		if (
