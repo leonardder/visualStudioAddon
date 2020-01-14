@@ -120,6 +120,7 @@ class CodeEditor(DocumentContent, EditableTextWithSuggestions, TextEditor):
 		if self.appModule.openedIntellisensePopup:
 			self.appModule.openedIntellisensePopup = False
 			self.appModule.selectedIntellisenseItem = None
+			self.appModule.readIntellisenseHelp = False
 			super().event_suggestionsClosed()
 
 	def event_suggestionsOpened(self):
@@ -254,20 +255,19 @@ class IntellisenseMenuItem(UIA):
 		if self._isHighlighted():
 			if self.editor and not self.appModule.openedIntellisensePopup:
 				self.editor.event_suggestionsOpened()
-				ui.message(
-					self.parent.next.next.name,
-					speech.Spri.NOW
-				)
 
 			if self.appModule.selectedIntellisenseItem != self:
-				if self.appModule.readIntellisenseHelp:
-					speech.cancelSpeech()
+				speech.cancelSpeech()
 				ui.message(self.name)
 
 				self.appModule.selectedIntellisenseItem = self
 
 			if not self.appModule.readIntellisenseHelp:
 				self.appModule.readIntellisenseHelp = True
+				ui.message(
+					# This is the location of the label relative to any intellisense item
+					self.parent.next.next.name,
+				)
 
 	def event_nameChange(self):
 		if (
@@ -289,4 +289,5 @@ class IntellisenseMenuItem(UIA):
 class IntellisenseLabel(UIA):
 
 	def event_liveRegionChange(self):
+		# This is a placeholder.
 		pass

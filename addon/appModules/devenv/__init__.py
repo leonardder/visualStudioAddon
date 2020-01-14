@@ -12,7 +12,7 @@ from globalCommands import SCRCAT_FOCUS
 import speech
 import gui
 from . import overlays
-from globalPlugins.vsAddon import config
+from . import config
 from nvdaBuiltin.appModules import devenv as devenv_builtIn
 
 # Initialize the translation system
@@ -125,7 +125,10 @@ class AppModule(devenv_builtIn.AppModule):
 	def event_liveRegionChange(self, obj, nextHandler):
 		name = obj.name
 
-		if not obj.name:
+		if (
+			isinstance(obj, overlays.IntellisenseLabel)
+			or not obj.name
+		):
 			nextHandler()
 
 		if isinstance(obj, overlays.IntellisenseLabel):

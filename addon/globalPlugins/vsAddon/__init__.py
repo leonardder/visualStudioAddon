@@ -9,7 +9,7 @@ import globalPluginHandler
 from logHandler import log
 import sys
 
-from .config import VSSettingsPanel
+from appModules.devenv.config import VSSettingsPanel
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
