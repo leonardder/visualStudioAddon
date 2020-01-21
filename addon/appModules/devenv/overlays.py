@@ -9,9 +9,11 @@ import os
 
 import comtypes
 import scriptHandler
+import eventHandler
 import speech
 import ui
 import api
+from logHandler import log
 
 from NVDAObjects import NVDAObject
 from NVDAObjects.UIA import Toast_win8 as Toast
@@ -121,6 +123,7 @@ class CodeEditor(DocumentContent, EditableTextWithSuggestions, TextEditor):
 			self.appModule.openedIntellisensePopup = False
 			self.appModule.selectedIntellisenseItem = None
 			self.appModule.readIntellisenseHelp = False
+			self.appModule.readIntellisenseItem = False
 			super().event_suggestionsClosed()
 
 	def event_suggestionsOpened(self):
@@ -251,17 +254,32 @@ class IntellisenseMenuItem(UIA):
 			except comtypes.COMError:
 				return False
 
-	def event_UIA_itemStatus(self):
-		if self._isHighlighted():
-			if self.editor and not self.appModule.openedIntellisensePopup:
-				self.editor.event_suggestionsOpened()
+	def event_UIA_elementSelected(self):
+		if self.editor and not self.appModule.openedIntellisensePopup:
+			eventHandler.executeEvent("suggestionsOpened", api.getFocusObject())
 
-			if self.appModule.selectedIntellisenseItem != self:
-				speech.cancelSpeech()
-				ui.message(self.name)
+		if self.appModule.selectedIntellisenseItem != self:
+			# Prepare to read the item when it's name changes:
+			self.appModule.readIntellisenseItem = True
+			speech.cancelSpeech()
+			ui.message(self.name)
+			self.appModule.selectedIntellisenseItem = self
 
-				self.appModule.selectedIntellisenseItem = self
-
+	def event_nameChange(self):
+		if (
+			self.appModule.selectedIntellisenseItem == self
+			and (
+				(
+					# Check if the user typed a character
+					self.editor
+					and self.editor.typedCharacter
+				)
+				or self.appModule.readIntellisenseItem
+			)
+		):
+			speech.cancelSpeech()
+			ui.message(self.name)
+			self.appModule.readIntellisenseItem = False
 			if not self.appModule.readIntellisenseHelp:
 				self.appModule.readIntellisenseHelp = True
 				ui.message(
@@ -269,25 +287,11 @@ class IntellisenseMenuItem(UIA):
 					self.parent.next.next.name,
 				)
 
-	def event_nameChange(self):
-		if (
-			self.appModule.selectedIntellisenseItem == self
-			# Check if the user typed a character
-			and self.editor.typedCharacter
-		):
-			self.appModule.selectedIntellisenseItem = None
-			self.event_UIA_itemStatus()
-
-	def event_UIA_elementSelected(self):
-		if self.appModule.selectedIntellisenseItem != self:
-			self.event_UIA_itemStatus()
-
-	def event_selection(self):
-		self.event_UIA_elementSelected()
-
 
 class IntellisenseLabel(UIA):
 
 	def event_liveRegionChange(self):
 		# This is a placeholder.
-		pass
+		if not self.appModule.readIntellisenseHelp:
+			super().event_liveRegionChange()
+			self.appModule.readIntellisenseHelp = True

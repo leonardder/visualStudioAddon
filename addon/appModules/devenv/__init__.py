@@ -24,6 +24,7 @@ class AppModule(devenv_builtIn.AppModule):
 	selectedIntellisenseItem: UIA = None
 	openedIntellisensePopup = False
 	readIntellisenseHelp: bool = False
+	readIntellisenseItem: bool = False
 	signatureHelpPlayed = False
 	lastFocusedEditor: UIA.WpfTextView = None
 
@@ -62,7 +63,13 @@ class AppModule(devenv_builtIn.AppModule):
 
 			if (
 				obj.role == controlTypes.ROLE_TOOLTIP
-				and obj.UIAElement.cachedAutomationId == "completion tooltip"
+				and (
+					obj.UIAElement.cachedAutomationId == "completion tooltip"
+					or (
+						isinstance(obj.parent.next, UIA.UIA)
+						and obj.parent.next.UIAElement.cachedAutomationId == "DefaultCompletionPresenter"
+					)
+				)
 			):
 				clsList.insert(0, overlays.DocumentationToolTip)
 
@@ -71,18 +78,25 @@ class AppModule(devenv_builtIn.AppModule):
 				and obj.UIAElement.cachedClassName == "WpfTextView"
 			):
 				if (
-					obj.parent
-					and obj.parent.parent
-					and obj.parent.parent.parent
-					and obj.parent.parent.parent.parent
-					and isinstance(obj.parent.parent.parent.parent, overlays.DocumentTab)
+					(
+						obj.parent
+						and obj.parent.parent
+						and obj.parent.parent.parent
+						and obj.parent.parent.parent.parent
+						and isinstance(obj.parent.parent.parent.parent, overlays.DocumentTab)
+					) or (
+						obj.parent
+						and obj.parent.parent
+						and obj.parent.parent.parent
+						and obj.parent.parent.parent.windowClassName == "GenericPane"
+					)
 				):
 					clsList.insert(0, overlays.CodeEditor)
 				elif (
 					obj.parent
 					and obj.parent.parent
 					and obj.parent.parent.parent
-					and obj.parent.parent.parent
+					and obj.parent.parent
 					and isinstance(obj.parent.parent.parent, UIA.UIA)
 					and obj.parent.parent.parent.UIAElement.cachedAutomationId in (
 						"ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}",
@@ -97,6 +111,7 @@ class AppModule(devenv_builtIn.AppModule):
 				and obj.parent
 				and obj.parent.parent
 				and obj.parent.parent.parent
+				and isinstance(obj.parent.parent.parent, UIA.UIA)
 				and obj.parent.parent.parent.UIAElement.cachedAutomationId in (
 					"ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}",
 				)
@@ -118,6 +133,7 @@ class AppModule(devenv_builtIn.AppModule):
 				and isinstance(obj.previous.previous, UIA.UIA)
 				and obj.previous.previous.UIAElement.cachedAutomationId in (
 					"CompletionList",
+					"listBoxCompletions",
 				)
 			):
 				clsList.insert(0, overlays.IntellisenseLabel)
