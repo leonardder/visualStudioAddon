@@ -254,14 +254,6 @@ class IntellisenseMenuItem(UIA):
 			except comtypes.COMError:
 				return False
 
-	def _get_name(self):
-		try:
-			# When the item is selected, it's name is set in the Intellisense label.
-			# In fact, this will be callled when the item is selected fo the first time. Then the object will be discarded and re-created.
-			return self.parent.next.next.name
-		except AttributeError:
-			return super().name
-
 	def event_UIA_elementSelected(self):
 		if self.editor and not self.appModule.openedIntellisensePopup:
 			eventHandler.executeEvent("suggestionsOpened", api.getFocusObject())
@@ -287,6 +279,6 @@ class IntellisenseLabel(UIA):
 
 	def event_liveRegionChange(self):
 		# This is a placeholder.
-		if not self.appModule.readIntellisenseHelp:
+		if self.appModule.openedIntellisensePopup and not self.appModule.readIntellisenseHelp:
 			super().event_liveRegionChange()
 			self.appModule.readIntellisenseHelp = True
